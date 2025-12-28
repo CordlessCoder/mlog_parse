@@ -2,14 +2,14 @@ use std::{error::Error, fmt};
 
 /// An error when parsing a statement
 #[derive(Debug)]
-pub enum StatementParseError {
+pub enum StatementParseError<'s> {
     /// Missing jump label
-    MissingJumpLabel(String),
+    MissingJumpLabel(&'s str),
     /// Invalid instruction
-    InvalidInstruction(Vec<String>),
+    InvalidInstruction(Vec<&'s str>),
 }
 
-impl fmt::Display for StatementParseError {
+impl fmt::Display for StatementParseError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -23,4 +23,4 @@ impl fmt::Display for StatementParseError {
     }
 }
 
-impl Error for StatementParseError {}
+impl Error for StatementParseError<'_> {}

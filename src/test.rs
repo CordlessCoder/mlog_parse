@@ -18,20 +18,20 @@ mod parser {
             lexer.map(|x| x.unwrap()).collect::<Vec<_>>(),
             [
                 Statement::Set {
-                    o: "test".to_string(),
+                    o: "test",
                     i: Argument::String("12")
                 },
                 Statement::Set {
-                    o: "testb".to_string(),
+                    o: "testb",
                     #[expect(clippy::approx_constant)]
                     i: Argument::Number(3.14159)
                 },
                 Statement::Set {
-                    o: "testc".to_string(),
+                    o: "testc",
                     i: Argument::Number(0xDEADBEEFu32 as f64)
                 },
                 Statement::Set {
-                    o: "testd".to_string(),
+                    o: "testd",
                     i: Argument::Number(-85.0)
                 }
             ]
@@ -53,22 +53,22 @@ mod parser {
             lexer.map(|x| x.unwrap()).collect::<Vec<_>>(),
             [
                 Statement::OpAdd {
-                    c: "a".to_string(),
+                    c: "a",
                     a: Argument::Number(12.0),
                     b: Argument::Number(-5.0)
                 },
                 Statement::OpSub {
-                    c: "b".to_string(),
+                    c: "b",
                     a: Argument::Number(-1.0),
                     b: Argument::Number(5.0)
                 },
                 Statement::OpMul {
-                    c: "c".to_string(),
+                    c: "c",
                     a: Argument::Number(8.0),
                     b: Argument::Variable("a")
                 },
                 Statement::OpDiv {
-                    c: "d".to_string(),
+                    c: "d",
                     a: Argument::Variable("b"),
                     b: Argument::Number(74.0)
                 },
@@ -102,22 +102,22 @@ mod parser {
                 },
                 Statement::Noop,
                 Statement::OpAdd {
-                    c: "a".to_string(),
+                    c: "a",
                     a: Argument::Number(12.0),
                     b: Argument::Number(-5.0)
                 },
                 Statement::OpSub {
-                    c: "b".to_string(),
+                    c: "b",
                     a: Argument::Number(-1.0),
                     b: Argument::Number(5.0)
                 },
                 Statement::OpMul {
-                    c: "c".to_string(),
+                    c: "c",
                     a: Argument::Number(8.0),
                     b: Argument::Variable("a")
                 },
                 Statement::OpDiv {
-                    c: "d".to_string(),
+                    c: "d",
                     a: Argument::Variable("b"),
                     b: Argument::Number(74.0)
                 },
@@ -134,7 +134,7 @@ mod parser {
     #[test]
     fn display() {
         let tokens = [Statement::OpAdd {
-            c: "a".to_string(),
+            c: "a",
             a: Argument::Number(12.0),
             b: Argument::Number(-5.0),
         }];

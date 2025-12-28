@@ -92,7 +92,7 @@ impl<'s> From<&'s str> for Argument<'s> {
         } else if value.starts_with('"') && value.ends_with('"') {
             Argument::String(&value[1..value.len() - 1])
         } else if COLOUR_REGEX.is_match(value) {
-            Argument::Colour(value.strip_prefix("%").unwrap())
+            Argument::Colour(&value[1..])
         } else if HEX_REGEX.is_match(value) {
             Argument::Number(parse_nradix_literal(value, 16) as f64)
         } else if BIN_REGEX.is_match(value) {

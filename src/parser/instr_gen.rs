@@ -41,7 +41,7 @@ macro_rules! gen_instructions {
                 #[doc = $desc_1i1o]
                 $ident_1i1o {
                     /// The output variable name
-                    o: String,
+                    o: &'a str,
                     /// The input argument
                     i: Argument<'a>
                 },
@@ -59,7 +59,7 @@ macro_rules! gen_instructions {
                 #[doc = $desc_2i1o]
                 $ident_2i1o {
                     /// The output variable name
-                    c: String,
+                    c: &'a str,
                     /// The LHS
                     a: Argument<'a>,
                     /// The RHS
@@ -71,7 +71,7 @@ macro_rules! gen_instructions {
         impl<'a> $name<'a> {
             /// Parse a set of whitespace split tokens into an instruction
             #[allow(unreachable_patterns)]
-            pub fn parse(v: &[&'a str], jump_labels: &HashMap<&str, usize>) -> Result<Self, StatementParseError> {
+            pub fn parse(v: &[&'a str], jump_labels: &HashMap<&'a str, usize>) -> Result<Self, StatementParseError<'a>> {
                 match v {
                     ["jump", index, cond_str, lhs, rhs, ..] if ConditionOp::try_from(*cond_str).is_ok() => {
                         if let Ok(index) = index.parse() {
@@ -86,7 +86,7 @@ macro_rules! gen_instructions {
                             Ok($name::Jump {
                                 index: jump_labels
                                     .get(*index)
-                                    .ok_or(StatementParseError::MissingJumpLabel(index.to_string()))?
+                                    .ok_or(StatementParseError::MissingJumpLabel(index))?
                                     .clone(),
                                 cond: ConditionOp::try_from(*cond_str).unwrap(),
                                 lhs: Some(Argument::from(*lhs)),
@@ -107,7 +107,7 @@ macro_rules! gen_instructions {
                             Ok($name::Jump {
                                 index: jump_labels
                                     .get(*index)
-                                    .ok_or(StatementParseError::MissingJumpLabel(index.to_string()))?
+                                    .ok_or(StatementParseError::MissingJumpLabel(index))?
                                     .clone(),
                                 cond: ConditionOp::Always,
                                 lhs: None,
@@ -116,10 +116,10 @@ macro_rules! gen_instructions {
                         }
                     },
                     $([$($name_2i1o),*, c, a, b, ..] if matches!(Argument::from(*c), Argument::Variable(_)) => {
-                        Ok($name::$ident_2i1o { c: c.to_string(), a: Argument::from(*a), b: Argument::from(*b) })
+                        Ok($name::$ident_2i1o { c, a: Argument::from(*a), b: Argument::from(*b) })
                     },)*
                     $([$($name_1i1o),*, o, i, ..] if matches!(Argument::from(*o), Argument::Variable(_)) => {
-                        Ok($name::$ident_1i1o { o: o.to_string(), i: Argument::from(*i) })
+                        Ok($name::$ident_1i1o { o, i: Argument::from(*i) })
                     },)*
                     $([$($name_2i0o),*, a, b, ..] => {
                         Ok($name::$ident_2i0o { a: Argument::from(*a), b: Argument::from(*b) })
