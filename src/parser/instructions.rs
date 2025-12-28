@@ -1,6 +1,8 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::fmt;
+use std::fmt::{self, Display, Write};
+use std::num::{IntErrorKind, ParseIntError};
+use std::str::FromStr;
 use strum::EnumString;
 
 use super::instr_gen::gen_instructions;
@@ -8,15 +10,75 @@ use super::parse_nradix_literal;
 
 /// An argument
 #[derive(Debug, PartialEq)]
-pub enum Argument {
+pub enum Argument<'a> {
     /// A numeric argument
     Number(f64),
     /// A literal string
-    String(String),
+    String(&'a str),
     /// A variable usage
-    Variable(String),
+    Variable(&'a str),
     /// A colour
-    Colour(String)
+    Colour(Rgba),
+    // _^ British spotted
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+/// A color
+pub struct Rgba {
+    /// Red
+    pub r: u8,
+    /// Green
+    pub g: u8,
+    /// Blue
+    pub b: u8,
+    /// Alpha
+    pub a: u8,
+}
+
+impl Default for Rgba {
+    fn default() -> Self {
+        Rgba {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 255,
+        }
+    }
+}
+
+impl Display for Rgba {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self { r, g, b, a } = self;
+        f.write_char('%')?;
+        for color in [r, g, b, a] {
+            write!(f, "{color:0>2x}")?;
+        }
+        Ok(())
+    }
+}
+
+impl FromStr for Rgba {
+    type Err = ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut channels = (0..s.len()).step_by(2).map(|start| s.get(start..start + 2));
+        let mut get_channel = || {
+            let Some(Some(channel)) = channels.next() else {
+                return u8::from_str_radix("", 16);
+            };
+            u8::from_str_radix(channel, 16)
+        };
+        let mut color = Rgba::default();
+        let Rgba { r, g, b, a } = &mut color;
+        for channel in [r, g, b] {
+            *channel = get_channel()?;
+        }
+        match get_channel() {
+            Err(err) if *err.kind() == IntErrorKind::Empty => {}
+            Err(err) => return Err(err),
+            Ok(alpha) => *a = alpha,
+        };
+        Ok(color)
+    }
 }
 
 /// A conditional. [reference](https://github.com/Anuken/Mindustry/blob/master/core/src/mindustry/logic/ConditionOp.java)
@@ -67,13 +129,13 @@ impl fmt::Display for ConditionOp {
     }
 }
 
-impl fmt::Display for Argument {
+impl fmt::Display for Argument<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Number(x) => write!(f, "{}", x),
             Self::String(x) => write!(f, "\"{}\"", x),
             Self::Variable(x) => write!(f, "{}", x),
-            Self::Colour(x) => write!(f, "%{}", x)
+            Self::Colour(x) => write!(f, "%{}", x),
         }
     }
 }
@@ -81,23 +143,24 @@ impl fmt::Display for Argument {
 lazy_static! {
     static ref HEX_REGEX: regex::Regex = Regex::new("^[+-]?0x[0-9a-fA-F]+$").unwrap();
     static ref BIN_REGEX: regex::Regex = Regex::new("^[+-]?0b[01]+$").unwrap();
-    static ref COLOUR_REGEX: regex::Regex = Regex::new("^%[09a-fA-F]{6}(?:[09a-fA-F]{2})?$").unwrap();
+    static ref COLOUR_REGEX: regex::Regex =
+        Regex::new("^%[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?$").unwrap();
 }
 
-impl From<&str> for Argument {
-    fn from(value: &str) -> Self {
+impl<'s> From<&'s str> for Argument<'s> {
+    fn from(value: &'s str) -> Self {
         if let Ok(x) = value.parse() {
             Argument::Number(x)
         } else if value.starts_with('"') && value.ends_with('"') {
-            Argument::String(value[1..value.len() - 1].to_string())
-        } else if COLOUR_REGEX.is_match(value){
-            Argument::Colour(value.strip_prefix("%").unwrap().to_string())
+            Argument::String(&value[1..value.len() - 1])
+        } else if COLOUR_REGEX.is_match(value) {
+            Argument::Colour(value[1..].parse().unwrap())
         } else if HEX_REGEX.is_match(value) {
             Argument::Number(parse_nradix_literal(value, 16) as f64)
         } else if BIN_REGEX.is_match(value) {
             Argument::Number(parse_nradix_literal(value, 2) as f64)
         } else {
-            Argument::Variable(value.to_string())
+            Argument::Variable(value)
         }
     }
 }
@@ -123,7 +186,7 @@ gen_instructions! {
         DrawFlush("drawflush") = "Flush draw buffer to provided display"
     ---
 
-    2i0o: 
+    2i0o:
         DrawTranslate("draw" "translate") = "Translate everything in the print buffer"
         DrawRotate("draw" "rotate") = "Rotate everything in the print buffer"
         DrawScale("draw" "scale") = "Scale everything in the print buffer"

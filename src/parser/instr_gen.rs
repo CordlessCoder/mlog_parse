@@ -13,7 +13,8 @@ macro_rules! gen_instructions {
 
         /// An mlog statement
         #[derive(Debug, PartialEq)]
-        pub enum $name {
+        #[allow(clippy::empty_docs)]
+        pub enum $name<'a> {
             /// A jump instruction
             Jump {
                 /// The index to jump to
@@ -21,9 +22,9 @@ macro_rules! gen_instructions {
                 /// The condition
                 cond: ConditionOp,
                 /// The condition LHS
-                lhs: Option<Argument>,
+                lhs: Option<Argument<'a>>,
                 /// The condition RHS
-                rhs: Option<Argument>
+                rhs: Option<Argument<'a>>
             },
             $(
                 #[doc = $desc_0i0o]
@@ -33,43 +34,44 @@ macro_rules! gen_instructions {
                 #[doc = $desc_1i0o]
                 $ident_1i0o {
                     /// The argument
-                    arg: Argument
+                    arg: Argument<'a>
                 },
             )*
             $(
                 #[doc = $desc_1i1o]
                 $ident_1i1o {
                     /// The output variable name
-                    o: String,
+                    o: &'a str,
                     /// The input argument
-                    i: Argument
+                    i: Argument<'a>
                 },
             )*
             $(
                 #[doc = $desc_2i0o]
                 $ident_2i0o {
                     /// Argument A
-                    a: Argument,
+                    a: Argument<'a>,
                     /// Argument B
-                    b: Argument
+                    b: Argument<'a>
                 },
             )*
             $(
                 #[doc = $desc_2i1o]
                 $ident_2i1o {
                     /// The output variable name
-                    c: String,
+                    c: &'a str,
                     /// The LHS
-                    a: Argument,
+                    a: Argument<'a>,
                     /// The RHS
-                    b: Argument
+                    b: Argument<'a>
                 },
             )*
         }
 
-        impl $name {
+        impl<'a> $name<'a> {
             /// Parse a set of whitespace split tokens into an instruction
-            pub fn parse(v: &[&str], jump_labels: &HashMap<&str, usize>) -> Result<Self, StatementParseError> {
+            #[allow(unreachable_patterns)]
+            pub fn parse(v: &[&'a str], jump_labels: &HashMap<&'a str, usize>) -> Result<Self, StatementParseError<'a>> {
                 match v {
                     ["jump", index, cond_str, lhs, rhs, ..] if ConditionOp::try_from(*cond_str).is_ok() => {
                         if let Ok(index) = index.parse() {
@@ -84,7 +86,7 @@ macro_rules! gen_instructions {
                             Ok($name::Jump {
                                 index: jump_labels
                                     .get(*index)
-                                    .ok_or(StatementParseError::MissingJumpLabel(index.to_string()))?
+                                    .ok_or(StatementParseError::MissingJumpLabel(index))?
                                     .clone(),
                                 cond: ConditionOp::try_from(*cond_str).unwrap(),
                                 lhs: Some(Argument::from(*lhs)),
@@ -105,7 +107,7 @@ macro_rules! gen_instructions {
                             Ok($name::Jump {
                                 index: jump_labels
                                     .get(*index)
-                                    .ok_or(StatementParseError::MissingJumpLabel(index.to_string()))?
+                                    .ok_or(StatementParseError::MissingJumpLabel(index))?
                                     .clone(),
                                 cond: ConditionOp::Always,
                                 lhs: None,
@@ -114,10 +116,10 @@ macro_rules! gen_instructions {
                         }
                     },
                     $([$($name_2i1o),*, c, a, b, ..] if matches!(Argument::from(*c), Argument::Variable(_)) => {
-                        Ok($name::$ident_2i1o { c: c.to_string(), a: Argument::from(*a), b: Argument::from(*b) })
+                        Ok($name::$ident_2i1o { c, a: Argument::from(*a), b: Argument::from(*b) })
                     },)*
                     $([$($name_1i1o),*, o, i, ..] if matches!(Argument::from(*o), Argument::Variable(_)) => {
-                        Ok($name::$ident_1i1o { o: o.to_string(), i: Argument::from(*i) })
+                        Ok($name::$ident_1i1o { o, i: Argument::from(*i) })
                     },)*
                     $([$($name_2i0o),*, a, b, ..] => {
                         Ok($name::$ident_2i0o { a: Argument::from(*a), b: Argument::from(*b) })
@@ -133,7 +135,7 @@ macro_rules! gen_instructions {
             }
         }
 
-        impl fmt::Display for $name {
+        impl fmt::Display for $name<'_> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 match self {
                     $name::Jump { index, cond, lhs: None, rhs: None } => write!(f, "jump {} {}", index, cond),

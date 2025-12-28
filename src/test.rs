@@ -1,11 +1,11 @@
 mod parser {
     use crate::parser;
-    use crate::parser::instructions::{Argument, ConditionOp, Statement};
+    use crate::parser::instructions::{Argument, ConditionOp, Rgba, Statement};
     use pretty_assertions::assert_eq;
 
     #[test]
     fn single_input() {
-        const SRC: &'static str = r#"
+        const SRC: &str = r#"
             set test "12" # A comment
             set testb 3.14159 # PI
             set testc 0xDEADBEEF # dead beef
@@ -18,19 +18,20 @@ mod parser {
             lexer.map(|x| x.unwrap()).collect::<Vec<_>>(),
             [
                 Statement::Set {
-                    o: "test".to_string(),
-                    i: Argument::String("12".to_string())
+                    o: "test",
+                    i: Argument::String("12")
                 },
                 Statement::Set {
-                    o: "testb".to_string(),
+                    o: "testb",
+                    #[expect(clippy::approx_constant)]
                     i: Argument::Number(3.14159)
                 },
                 Statement::Set {
-                    o: "testc".to_string(),
+                    o: "testc",
                     i: Argument::Number(0xDEADBEEFu32 as f64)
                 },
                 Statement::Set {
-                    o: "testd".to_string(),
+                    o: "testd",
                     i: Argument::Number(-85.0)
                 }
             ]
@@ -39,7 +40,7 @@ mod parser {
 
     #[test]
     fn operation() {
-        const SRC: &'static str = r#"
+        const SRC: &str = r#"
             op add a 12 -0x05
             op sub b -0b01 5
             op mul c  0x08 a
@@ -52,23 +53,23 @@ mod parser {
             lexer.map(|x| x.unwrap()).collect::<Vec<_>>(),
             [
                 Statement::OpAdd {
-                    c: "a".to_string(),
+                    c: "a",
                     a: Argument::Number(12.0),
                     b: Argument::Number(-5.0)
                 },
                 Statement::OpSub {
-                    c: "b".to_string(),
+                    c: "b",
                     a: Argument::Number(-1.0),
                     b: Argument::Number(5.0)
                 },
                 Statement::OpMul {
-                    c: "c".to_string(),
+                    c: "c",
                     a: Argument::Number(8.0),
-                    b: Argument::Variable("a".to_string())
+                    b: Argument::Variable("a")
                 },
                 Statement::OpDiv {
-                    c: "d".to_string(),
-                    a: Argument::Variable("b".to_string()),
+                    c: "d",
+                    a: Argument::Variable("b"),
                     b: Argument::Number(74.0)
                 },
             ]
@@ -77,7 +78,7 @@ mod parser {
 
     #[test]
     fn ops_with_jump() {
-        const SRC: &'static str = r#"
+        const SRC: &str = r#"
             jl1:
                 jump 2 greaterThan a 2
                 nop
@@ -85,6 +86,7 @@ mod parser {
                 op sub b -0b01 5
                 op mul c  0x08 a
                 op div d b 0b1001010
+                op div d %abcdef %01234567
             jump jl1 always
         "#;
 
@@ -96,36 +98,51 @@ mod parser {
                 Statement::Jump {
                     index: 2,
                     cond: ConditionOp::GreaterThan,
-                    lhs: Some(Argument::Variable("a".to_string()),),
+                    lhs: Some(Argument::Variable("a"),),
                     rhs: Some(Argument::Number(2.0),),
                 },
                 Statement::Noop,
                 Statement::OpAdd {
-                    c: "a".to_string(),
+                    c: "a",
                     a: Argument::Number(12.0),
                     b: Argument::Number(-5.0)
                 },
                 Statement::OpSub {
-                    c: "b".to_string(),
+                    c: "b",
                     a: Argument::Number(-1.0),
                     b: Argument::Number(5.0)
                 },
                 Statement::OpMul {
-                    c: "c".to_string(),
+                    c: "c",
                     a: Argument::Number(8.0),
-                    b: Argument::Variable("a".to_string())
+                    b: Argument::Variable("a")
                 },
                 Statement::OpDiv {
-                    c: "d".to_string(),
-                    a: Argument::Variable("b".to_string()),
+                    c: "d",
+                    a: Argument::Variable("b"),
                     b: Argument::Number(74.0)
+                },
+                Statement::OpDiv {
+                    c: "d",
+                    a: Argument::Colour(Rgba {
+                        r: 171,
+                        g: 205,
+                        b: 239,
+                        a: 255
+                    }),
+                    b: Argument::Colour(Rgba {
+                        r: 1,
+                        g: 35,
+                        b: 69,
+                        a: 103
+                    })
                 },
                 Statement::Jump {
                     index: 1,
                     cond: ConditionOp::Always,
                     lhs: None,
                     rhs: None
-                }
+                },
             ]
         )
     }
@@ -133,7 +150,7 @@ mod parser {
     #[test]
     fn display() {
         let tokens = [Statement::OpAdd {
-            c: "a".to_string(),
+            c: "a",
             a: Argument::Number(12.0),
             b: Argument::Number(-5.0),
         }];
