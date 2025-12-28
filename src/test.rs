@@ -1,0 +1,57 @@
+mod parser {
+    use crate::parser::instructions::{Argument, Statement};
+    use crate::parser;
+
+    #[test]
+    fn single_input() {
+        const SRC: &'static str = r#"
+            set test "12" # A comment
+            set testb 3.14159 # PI
+            set testc 0xDEADBEEF # dead beef
+            set testd -0b01010101 # binary
+        "#;
+
+        let lexer = parser::Lexer::new(SRC);
+
+        assert_eq!(
+            lexer.map(|x| x.unwrap()).collect::<Vec<_>>(),
+            [
+                Statement::Set { o: "test".to_string(),  i: Argument::String("12".to_string()) },
+                Statement::Set { o: "testb".to_string(), i: Argument::Number(3.14159) },
+                Statement::Set { o: "testc".to_string(), i: Argument::Number(0xDEADBEEFu32 as f64) },
+                Statement::Set { o: "testd".to_string(), i: Argument::Number(-85.0) }
+            ]
+        )
+    }
+
+    #[test]
+    fn operation() {
+        const SRC: &'static str = r#"
+            op add a 12 -0x05
+            op sub b -0b01 5
+            op mul c  0x08 a
+            op div d b 0b1001010
+        "#;
+
+        let lexer = parser::Lexer::new(SRC);
+
+        assert_eq!(
+            lexer.map(|x| x.unwrap()).collect::<Vec<_>>(),
+            [
+                Statement::OpAdd { c: "a".to_string(), a: Argument::Number(12.0), b: Argument::Number(-5.0) },
+                Statement::OpSub { c: "b".to_string(), a: Argument::Number(-1.0), b: Argument::Number(5.0) },
+                Statement::OpMul { c: "c".to_string(), a: Argument::Number(8.0), b: Argument::Variable("a".to_string()) },
+                Statement::OpDiv { c: "d".to_string(), a: Argument::Variable("b".to_string()), b: Argument::Number(74.0) },
+            ]
+        )
+    }
+
+    #[test]
+    fn display() {
+        let tokens = [
+            Statement::OpAdd { c: "a".to_string(), a: Argument::Number(12.0), b: Argument::Number(-5.0) }
+        ];
+
+        assert_eq!(tokens.map(|x| x.to_string()), ["op add a -5 12"])
+    }
+}
