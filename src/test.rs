@@ -1,6 +1,6 @@
 mod parser {
     use crate::parser;
-    use crate::parser::instructions::{Argument, ConditionOp, Statement};
+    use crate::parser::instructions::{Argument, ConditionOp, Rgba, Statement};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -86,6 +86,7 @@ mod parser {
                 op sub b -0b01 5
                 op mul c  0x08 a
                 op div d b 0b1001010
+                op div d %abcdef %01234567
             jump jl1 always
         "#;
 
@@ -121,12 +122,27 @@ mod parser {
                     a: Argument::Variable("b"),
                     b: Argument::Number(74.0)
                 },
+                Statement::OpDiv {
+                    c: "d",
+                    a: Argument::Colour(Rgba {
+                        r: 171,
+                        g: 205,
+                        b: 239,
+                        a: 255
+                    }),
+                    b: Argument::Colour(Rgba {
+                        r: 1,
+                        g: 35,
+                        b: 69,
+                        a: 103
+                    })
+                },
                 Statement::Jump {
                     index: 1,
                     cond: ConditionOp::Always,
                     lhs: None,
                     rhs: None
-                }
+                },
             ]
         )
     }
