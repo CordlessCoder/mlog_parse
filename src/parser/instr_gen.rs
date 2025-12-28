@@ -74,7 +74,7 @@ macro_rules! gen_instructions {
                     ["jump", index, cond_str, lhs, rhs, ..] if ConditionOp::try_from(*cond_str).is_ok() => {
                         if let Ok(index) = index.parse() {
                             Ok($name::Jump {
-                                index: index,
+                                index,
                                 cond: ConditionOp::try_from(*cond_str).unwrap(),
                                 lhs: Some(Argument::from(*lhs)),
                                 rhs: Some(Argument::from(*rhs))
@@ -95,7 +95,7 @@ macro_rules! gen_instructions {
                     ["jump", index, "always", ..] => {
                         if let Ok(index) = index.parse() {
                             Ok($name::Jump {
-                                index: index,
+                                index,
                                 cond: ConditionOp::Always,
                                 lhs: None,
                                 rhs: None
