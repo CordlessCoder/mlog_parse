@@ -165,6 +165,12 @@ impl<'s> From<&'s str> for Argument<'s> {
 }
 
 gen_instructions! {
+
+//     ubind @poly
+// ucontrol move 0 0 0 0 0
+// uradar enemy any any distance 0 1 result
+// ulocate building core true @copper outx outy found building
+
     Statement,
     0i0o:
         Noop("nop")  = "No-op"
@@ -192,6 +198,12 @@ gen_instructions! {
 
         DrawFlush("drawflush")   = "Draw the drawbuffer to a display"
         PrintFlush("printflush") = "Print the messagebuffer to a message block"
+
+        UBind("ubind") = "Bind a unit with a given type"
+
+        UCBoost("ucontrol" "boost")   = "Set whether a unit should boost"
+        UCBoost("ucontrol" "payTake") = "Make a unit take payload"
+        UCFlag("ucontrol" "flag")     = "Sets a unit's flag"
     ---
 
     2i0o:
@@ -202,11 +214,21 @@ gen_instructions! {
         ControlEnabled("control enabled") = "Set whether a block is enabled or not"
         ControlConfig("control config")   = "Set the configuration of a block (exact behaviour depends on the block)"
         ControlColour("control color")    = "Set the colour of a block that supports it"
+
+        UCMove("ucontrol" "move")         = "Set the position for units to move to"
+        UCPathfind("ucontrol" "pathfind") = "Set the position for units to pathfind to"
+        UCTargetP("ucontrol" "targetp")   = "Makes a unit shoot with velocity prediction"
+        UCItemDrop("ucontrol" "itemDrop") = "Makes a unit drop items"
+        UCMine("ucontrol" "mine")         = "Makes a unit mine a given coordinate"
     ---
 
 
     3i0o: 
         ControlShootP("control shootp") = "Set where a turret should shoot with velocity prediction"
+
+        UCApproach("ucontrol" "approach") = "Set the position for units to approach"
+        UCTarget("ucontrol" "target")     = "Set the position for units to target"
+        UCItemTake("ucontrol" "itemtake") = "Make a unit take items"
     ---
 
     4i0o: 
