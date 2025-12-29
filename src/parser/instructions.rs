@@ -1,5 +1,5 @@
 use regex::Regex;
-use std::fmt::{self, Display, Write};
+use std::fmt::{self, Display, Write, write};
 use std::num::{IntErrorKind, ParseIntError};
 use std::str::FromStr;
 use std::sync::LazyLock;
@@ -20,6 +20,8 @@ pub enum Argument<'a> {
     /// A colour
     Colour(Rgba),
     // _^ British spotted
+    /// A string starting in @
+    GlobalConst(&'a str),
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -136,6 +138,7 @@ impl fmt::Display for Argument<'_> {
             Self::String(x) => write!(f, "\"{x}\""),
             Self::Variable(x) => write!(f, "{x}"),
             Self::Colour(x) => write!(f, "%{x}"),
+            Self::GlobalConst(x) => write!(f, "@{x}")
         }
     }
 }
@@ -149,9 +152,10 @@ impl<'s> From<&'s str> for Argument<'s> {
     fn from(value: &'s str) -> Self {
         if let Ok(x) = value.parse() {
             return Argument::Number(x);
-        }
-        if value.starts_with('"') && value.ends_with('"') {
+        } if value.starts_with('"') && value.ends_with('"') {
             Argument::String(&value[1..value.len() - 1])
+        } else if value.starts_with("@"){
+            Argument::GlobalConst(&value[1..value.len() - 1])
         } else if COLOUR_REGEX.is_match(value) {
             Argument::Colour(value[1..].parse().unwrap())
         } else if HEX_REGEX.is_match(value) {
