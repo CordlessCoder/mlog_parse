@@ -181,12 +181,12 @@ macro_rules! gen_instructions {
                         Ok($name::$ident_2i1o { c, a: Argument::from(*a), b: Argument::from(*b) })
                     },)*
                     $([$($name_4i1o),*, o, a, b, c, d, ..] if matches!(Argument::from(*c), Argument::Variable(_)) => {
-                        Ok($name::$ident_4i1o { 
+                        Ok($name::$ident_4i1o {
                             o: *o,
-                            a: Argument::from(*a), 
-                            b: Argument::from(*b), 
-                            c: Argument::from(*c), 
-                            d: Argument::from(*d) 
+                            a: Argument::from(*a),
+                            b: Argument::from(*b),
+                            c: Argument::from(*c),
+                            d: Argument::from(*d)
                         })
                     },)*
                     _ => unimplemented!()

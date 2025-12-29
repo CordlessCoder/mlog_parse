@@ -1,5 +1,5 @@
 use regex::Regex;
-use std::fmt::{self, Display, Write, write};
+use std::fmt::{self, Display, Write};
 use std::num::{IntErrorKind, ParseIntError};
 use std::str::FromStr;
 use std::sync::LazyLock;
@@ -138,7 +138,7 @@ impl fmt::Display for Argument<'_> {
             Self::String(x) => write!(f, "\"{x}\""),
             Self::Variable(x) => write!(f, "{x}"),
             Self::Colour(x) => write!(f, "%{x}"),
-            Self::GlobalConst(x) => write!(f, "@{x}")
+            Self::GlobalConst(x) => write!(f, "@{x}"),
         }
     }
 }
@@ -150,37 +150,20 @@ static COLOUR_REGEX: LazyLock<Regex> =
 
 impl<'s> From<&'s str> for Argument<'s> {
     fn from(value: &'s str) -> Self {
-        /*if let Ok(x) = value.parse() {
-            return Argument::Number(x);
-        } else if value.starts_with('"') && value.ends_with('"') {
-            Argument::String(&value[1..value.len() - 1])
-        } else if value.starts_with("@"){
-            Argument::GlobalConst(&value[1..value.len() - 1])
-        } else if COLOUR_REGEX.is_match(value) {
-            Argument::Colour(value[1..].parse().unwrap())
-        } else if HEX_REGEX.is_match(value) {
-            Argument::Number(parse_nradix_literal(value, 16) as f64)
-        } else if BIN_REGEX.is_match(value) {
-            Argument::Number(parse_nradix_literal(value, 2) as f64)
-        } else {
-            Argument::Variable(value)
-        }*/
-
         match value.chars().next() {
             Some('"') if value.ends_with('"') => Argument::String(&value[1..value.len() - 1]),
             Some('@') => Argument::Colour(value[1..].parse().unwrap()),
-            Some(_) => {
-                if COLOUR_REGEX.is_match(value) {
-                    Argument::Colour(value[1..].parse().unwrap())
-                } else if HEX_REGEX.is_match(value) {
-                    Argument::Number(parse_nradix_literal(value, 16) as f64)
-                } else if BIN_REGEX.is_match(value) {
-                    Argument::Number(parse_nradix_literal(value, 2) as f64)
-                } else {
-                    Argument::Variable(value)
-                }
+            Some(_) if COLOUR_REGEX.is_match(value) => {
+                Argument::Colour(value[1..].parse().unwrap())
             }
-            _ => unimplemented!()
+            Some(_) if HEX_REGEX.is_match(value) => {
+                Argument::Number(parse_nradix_literal(value, 16) as f64)
+            }
+            Some(_) if BIN_REGEX.is_match(value) => {
+                Argument::Number(parse_nradix_literal(value, 2) as f64)
+            }
+            Some(_) => Argument::Variable(value),
+            _ => unimplemented!(),
         }
     }
 }
@@ -244,7 +227,7 @@ gen_instructions! {
     ---
 
 
-    3i0o: 
+    3i0o:
         ControlShootP("control shootp") = "Set where a turret should shoot with velocity prediction"
 
         UCApproach("ucontrol" "approach") = "Set the position for units to approach"
@@ -252,11 +235,11 @@ gen_instructions! {
         UCItemTake("ucontrol" "itemtake") = "Make a unit take items"
     ---
 
-    4i0o: 
+    4i0o:
         ControlShoot("control shoot") = "Set where a turret should shoot"
     ---
 
-    1i1o: 
+    1i1o:
         Set("set") = "Set variable"
 
         // Looks wrong, but isn't
