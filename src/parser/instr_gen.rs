@@ -9,6 +9,7 @@ macro_rules! gen_instructions {
 
         1i1o: $($ident_1i1o:ident ($($name_1i1o:literal)+) = $desc_1i1o:literal)*---
         2i1o: $($ident_2i1o:ident ($($name_2i1o:literal)+) = $desc_2i1o:literal)*---
+        4i1o: $($ident_4i1o:ident ($($name_4i1o:literal)+) = $desc_4i1o:literal)*---
     ) => {
         use std::collections::HashMap;
         use super::errs::StatementParseError;
@@ -37,15 +38,6 @@ macro_rules! gen_instructions {
                 $ident_1i0o {
                     /// The argument
                     arg: Argument<'a>
-                },
-            )*
-            $(
-                #[doc = $desc_1i1o]
-                $ident_1i1o {
-                    /// The output variable name
-                    o: &'a str,
-                    /// The input argument
-                    i: Argument<'a>
                 },
             )*
             $(
@@ -83,6 +75,15 @@ macro_rules! gen_instructions {
                 },
             )*
             $(
+                #[doc = $desc_1i1o]
+                $ident_1i1o {
+                    /// The output variable name
+                    o: &'a str,
+                    /// The input argument
+                    i: Argument<'a>
+                },
+            )*
+            $(
                 #[doc = $desc_2i1o]
                 $ident_2i1o {
                     /// The output variable name
@@ -91,6 +92,21 @@ macro_rules! gen_instructions {
                     a: Argument<'a>,
                     /// The RHS
                     b: Argument<'a>
+                },
+            )*
+            $(
+                #[doc = $desc_4i1o]
+                $ident_4i1o {
+                    /// The output variable name
+                    o: &'a str,
+                    /// Argument A
+                    a: Argument<'a>,
+                    /// Argument B
+                    b: Argument<'a>,
+                    /// Argument C
+                    c: Argument<'a>,
+                    /// Argument D
+                    d: Argument<'a>
                 },
             )*
         }
@@ -143,11 +159,14 @@ macro_rules! gen_instructions {
                             })
                         }
                     },
-                    $([$($name_2i1o),*, c, a, b, ..] if matches!(Argument::from(*c), Argument::Variable(_)) => {
-                        Ok($name::$ident_2i1o { c, a: Argument::from(*a), b: Argument::from(*b) })
+                    $([$($name_0i0o),*, ..] => {
+                        Ok($name::$ident_0i0o {})
                     },)*
-                    $([$($name_1i1o),*, o, i, ..] if matches!(Argument::from(*o), Argument::Variable(_)) => {
-                        Ok($name::$ident_1i1o { o, i: Argument::from(*i) })
+                    $([$($name_1i0o),*, arg, ..] => {
+                        Ok($name::$ident_1i0o { arg: Argument::from(*arg) })
+                    },)*
+                    $([$($name_2i0o),*, a, b, ..] => {
+                        Ok($name::$ident_2i0o { a: Argument::from(*a), b: Argument::from(*b) })
                     },)*
                     $([$($name_3i0o),*, a, b, c, ..] => {
                         Ok($name::$ident_3i0o { a: Argument::from(*a), b: Argument::from(*b), c: Argument::from(*c) })
@@ -155,14 +174,20 @@ macro_rules! gen_instructions {
                     $([$($name_4i0o),*, a, b, c, d, ..] => {
                         Ok($name::$ident_4i0o { a: Argument::from(*a), b: Argument::from(*b), c: Argument::from(*c), d: Argument::from(*d)  })
                     },)*
-                    $([$($name_2i0o),*, a, b, ..] => {
-                        Ok($name::$ident_2i0o { a: Argument::from(*a), b: Argument::from(*b) })
+                    $([$($name_1i1o),*, o, i, ..] if matches!(Argument::from(*o), Argument::Variable(_)) => {
+                        Ok($name::$ident_1i1o { o, i: Argument::from(*i) })
                     },)*
-                    $([$($name_1i0o),*, arg, ..] => {
-                        Ok($name::$ident_1i0o { arg: Argument::from(*arg) })
+                    $([$($name_2i1o),*, c, a, b, ..] if matches!(Argument::from(*c), Argument::Variable(_)) => {
+                        Ok($name::$ident_2i1o { c, a: Argument::from(*a), b: Argument::from(*b) })
                     },)*
-                    $([$($name_0i0o),*, ..] => {
-                        Ok($name::$ident_0i0o {})
+                    $([$($name_4i1o),*, o, a, b, c, d, ..] => {
+                        Ok($name::$ident_4i1o { 
+                            o: *o,
+                            a: Argument::from(*a), 
+                            b: Argument::from(*b), 
+                            c: Argument::from(*c), 
+                            d: Argument::from(*d) 
+                        })
                     },)*
                     _ => unimplemented!()
                 }
