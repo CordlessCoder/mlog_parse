@@ -124,24 +124,50 @@ mod parser {
                 },
                 Statement::OpDiv {
                     c: "d",
-                    a: Argument::Colour(Rgba {
-                        r: 171,
-                        g: 205,
-                        b: 239,
-                        a: 255
-                    }),
-                    b: Argument::Colour(Rgba {
-                        r: 1,
-                        g: 35,
-                        b: 69,
-                        a: 103
-                    })
+                    a: Argument::Colour(Rgba { r: 171, g: 205, b: 239, a: 255 }),
+                    b: Argument::Colour(Rgba { r: 1, g: 35, b: 69, a: 103 })
                 },
                 Statement::Jump {
                     index: 1,
                     cond: ConditionOp::Always,
                     lhs: None,
                     rhs: None
+                },
+            ]
+        )
+    }
+
+    #[test]
+    fn all_opwidths() {
+        const SRC: &str = r#"
+            nop
+            draw col %123456AF
+            draw translate 5 5
+
+            set a 1
+            op add b a 2
+        "#;
+
+        let lexer = parser::Lexer::new(SRC);
+        assert_eq!(
+            lexer.map(|x| x.unwrap()).collect::<Vec<_>>(),
+            [
+                Statement::Noop,
+                Statement::DrawCol {
+                    arg: Argument::Colour( Rgba { r: 18, g: 52, b: 86, a: 175 }),
+                },
+                Statement::DrawTranslate {
+                    a: Argument::Number(5.0),
+                    b: Argument::Number(5.0)
+                },
+                Statement::Set {
+                    o: "a",
+                    i: Argument::Number(1.0),
+                },
+                Statement::OpAdd {
+                    c: "b",
+                    a: Argument::Variable("a"),
+                    b: Argument::Number(2.0),
                 },
             ]
         )
