@@ -205,6 +205,8 @@ gen_instructions! {
         UCBoost("ucontrol" "boost")   = "Set whether a unit should boost"
         UCPayTake("ucontrol" "payTake") = "Make a unit take payload"
         UCFlag("ucontrol" "flag")     = "Sets a unit's flag"
+        
+        Wait("wait") = "Wait for n seconds"
     ---
 
     2i0o:
